@@ -17,9 +17,10 @@ export const handler = async (event: any) => {
         return buildResponse(200, PRODUCTS.find(product => product.id === productId));
 
     } catch (err) {
-        return buildResponse(500,
-            {
-                message: err.message
-            });
+        if (err instanceof Error) {
+            return buildResponse(500, { message: err.message });
+        } else {
+            return buildResponse(500, { message: 'Unknown error occurred' });
+        }
     }
 };

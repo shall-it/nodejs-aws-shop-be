@@ -8,10 +8,14 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "deploy": "npm run cdk deploy",
+    "destroy": "npm run cdk destroy",
+    "test:deploy": "npm test && npm run deploy"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
+    "@types/lodash": "^4.14.201",
     "@types/node": "^20.9.0",
     "aws-cdk": "2.110.0",
     "esbuild": "^0.19.5",

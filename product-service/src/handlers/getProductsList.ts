@@ -6,10 +6,12 @@ export const handler = async (event: any) => {
         console.log('aloha', event)
 
         return buildResponse(200, PRODUCTS);
+
     } catch (err) {
-        return buildResponse(500,
-            {
-                message: err.message
-            });
+        if (err instanceof Error) {
+            return buildResponse(500, { message: err.message });
+        } else {
+            return buildResponse(500, { message: 'Unknown error occurred' });
+        }
     }
 };
