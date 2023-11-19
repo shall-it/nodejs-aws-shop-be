@@ -5,12 +5,21 @@ export const handler = async (event: any) => {
     try {
         console.log('aloha', event)
 
-        return buildResponse(200, {
-            products: PRODUCTS,
-        });
+        const productId = event.pathParameters.productId
+
+        if (!PRODUCTS.some(product => product.id === productId)) {
+            return buildResponse(400,
+                {
+                    message: "Product not found"
+                });
+        }
+
+        return buildResponse(200, PRODUCTS.find(product => product.id === productId));
+
     } catch (err) {
-        return buildResponse(500, {
-            message: err.message
-        });
+        return buildResponse(500,
+            {
+                message: err.message
+            });
     }
 };
