@@ -6,15 +6,16 @@ export const handler = async (event: any) => {
         console.log('aloha', event)
 
         const productId = event.pathParameters.productId
+        const productIdFinder = PRODUCTS.find(product => product.id === productId)
 
-        if (!PRODUCTS.some(product => product.id === productId)) {
-            return buildResponse(400,
+        if (!productIdFinder) {
+            return buildResponse(404,
                 {
                     message: "Product not found"
                 });
         }
 
-        return buildResponse(200, PRODUCTS.find(product => product.id === productId));
+        return buildResponse(200, productIdFinder);
 
     } catch (err) {
         if (err instanceof Error) {

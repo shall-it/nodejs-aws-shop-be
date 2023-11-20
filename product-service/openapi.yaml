@@ -41,7 +41,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product' 
-        '400':
+        '404':
           description: "Product not found"
         '500':
           description: "Not Found"
