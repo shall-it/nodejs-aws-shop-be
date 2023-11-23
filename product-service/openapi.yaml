@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  version: "1.0.0"
+  title: "Product service"
+servers:
+  - url: https://h4y1ufebk7.execute-api.us-east-1.amazonaws.com/
+tags:
+  - name: "products"
+    description: "Access to the list of products"
+paths:
+  /products:
+    get:
+      tags:
+        - "products"
+      summary: "Get the list of all products"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product' 
+        '500':
+          description: "Not Found"
+  /products/{productId}:
+    get:
+      tags:
+        - "products"
+      summary: "Get a single product by id"
+      parameters:
+        - name: productId
+          in: path
+          description: The id of product which needs to be found
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product' 
+        '404':
+          description: "Product not found"
+        '500':
+          description: "Not Found"
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "7567ec4b-b10c-48c5-9345-fc73c48a80a3"
+        description:
+          type: string
+          example: "Short Product Description1"
+        price:
+          type: integer
+          format: int32
+          example: 23
+        title:
+          type: string
+          example: "Product-Mock"
+
