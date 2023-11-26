@@ -5,7 +5,7 @@ import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
-import * as iam from '@aws-cdk/aws-iam';
+// import * as iam from '@aws-cdk/aws-iam';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 // import dotenv from 'dotenv';
 
@@ -46,28 +46,30 @@ const getProductsById = new NodejsFunction(stack, 'GetProductsByIdLambda', {
   entry: 'src/handlers/getProductsByIdDdb.ts',
 });
 
-// const createProduct = new NodejsFunction(stack, 'createProductLambda', {
-//   ...sharedLambdaProps,
-//   functionName: 'createProduct',
-//   entry: 'src/handlers/createProductDdb.ts',
-// });
+const createProduct = new NodejsFunction(stack, 'createProductLambda', {
+  ...sharedLambdaProps,
+  functionName: 'createProduct',
+  entry: 'src/handlers/createProductDdb.ts',
+});
 
 const table1 = dynamodb.Table.fromTableName(stack, 'Table1', table1Name);
 const table2 = dynamodb.Table.fromTableName(stack, 'Table2', table2Name);
 
-const policy = new iam.PolicyStatement({
-  effect: iam.Effect.ALLOW,
-  actions: ['dynamodb:GetItem', 'dynamodb:Query', 'dynamodb:Scan'],
-  resources: [
-    `arn:aws:dynamodb:${stack.region}:${stack.account}:table/${table1Name}`,
-    `arn:aws:dynamodb:${stack.region}:${stack.account}:table/${table2Name}`,
-  ],
-});
+// const policy = new iam.PolicyStatement({
+//   effect: iam.Effect.ALLOW,
+//   actions: ['dynamodb:GetItem', 'dynamodb:Query', 'dynamodb:Scan'],
+//   resources: [
+//     `arn:aws:dynamodb:${stack.region}:${stack.account}:table/${table1Name}`,
+//     `arn:aws:dynamodb:${stack.region}:${stack.account}:table/${table2Name}`,
+//   ],
+// });
 
 table1.grantReadData(getProductsList)
 table2.grantReadData(getProductsList)
 table1.grantReadData(getProductsById)
 table2.grantReadData(getProductsById)
+table1.grantWriteData(createProduct)
+table2.grantWriteData(createProduct)
 
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
@@ -83,11 +85,11 @@ api.addRoutes({
   methods: [apiGateway.HttpMethod.GET]
 })
 
-// api.addRoutes({
-//   integration: new HttpLambdaIntegration('createProductIntegration', createProduct),
-//   path: '/products',
-//   methods: [apiGateway.HttpMethod.POST]
-// })
+api.addRoutes({
+  integration: new HttpLambdaIntegration('createProductIntegration', createProduct),
+  path: '/products',
+  methods: [apiGateway.HttpMethod.POST]
+})
 
 api.addRoutes({
   integration: new HttpLambdaIntegration('getProductsByIdIntegration', getProductsById),
