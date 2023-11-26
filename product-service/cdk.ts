@@ -12,14 +12,14 @@ dotenv.config();
 
 const app = new cdk.App();
 
-const stack = new cdk.Stack(app, 'ProductServiceStack', {
-  env: { region: 'us-east-1' }
-});
-
 const productAWSRegion = process.env.PRODUCT_AWS_REGION!
 if (!productAWSRegion) {
   throw new Error('Variable PRODUCT_AWS_REGION must be set into .env file');
 }
+
+const stack = new cdk.Stack(app, 'ProductServiceStack', {
+  env: { region: productAWSRegion }
+});
 
 const tableNameProducts = process.env.TABLE_NAME_PRODUCTS!;
 const tableNameStocks = process.env.TABLE_NAME_STOCKS!;
