@@ -3,25 +3,32 @@ import { DynamoDB } from 'aws-sdk';
 const docClient = new DynamoDB.DocumentClient();
 
 exports.handler = async (event: any) => {
-    const table1Name = process.env.TABLE1_NAME;
-    const table2Name = process.env.TABLE2_NAME;
+    const productsTableName = process.env.PRODUCTS_TABLE_NAME;
+    const stocksTableName = process.env.STOCKS_TABLE_NAME;
 
-    const productId = event.pathParameters.productId
-
-    if (!table1Name || !table2Name) {
-        throw new Error('Environment variables TABLE1_NAME and TABLE2_NAME must be set');
+    if (!productsTableName || !stocksTableName) {
+        return buildResponse(500,
+            {
+                message: "Environment variables PRODUCTS_TABLE_NAME and STOCKS_TABLE_NAME must be set"
+            });
     }
 
-    const params1 = {
-        TableName: table1Name,
+    console.log(`Name for table of products: ${productsTableName}`);
+    console.log(`Name for table of stocks: ${stocksTableName}`);
+
+    const productId = event.pathParameters.productId
+    console.log(`Value of product ID: ${productId}`);
+
+    const productsParams = {
+        TableName: productsTableName,
         KeyConditionExpression: 'id = :id',
         ExpressionAttributeValues: {
             ':id': productId
         }
     };
 
-    const params2 = {
-        TableName: table2Name,
+    const stocksParams = {
+        TableName: stocksTableName,
         KeyConditionExpression: 'product_id = :product_id',
         ExpressionAttributeValues: {
             ':product_id': productId
@@ -29,40 +36,47 @@ exports.handler = async (event: any) => {
     };
 
     try {
-        const data1 = await docClient.query(params1).promise();
-        console.log('Query of product by id is succeeded:', JSON.stringify(data1.Items, null, 2));
+        const productsData = await docClient.query(productsParams).promise();
+        console.log('Query of product by id is:', JSON.stringify(productsData.Items, null, 2));
 
-        const data2 = await docClient.query(params2).promise();
-        console.log('Query of stock by product_id is succeeded:', JSON.stringify(data2.Items, null, 2));
+        const stocksData = await docClient.query(stocksParams).promise();
+        console.log('Query of stock by product_id is:', JSON.stringify(stocksData.Items, null, 2));
 
-        if (data1.Items && data2.Items) {
-            if (data1.Items.length === 0) {
+        if (productsData.Items && stocksData.Items) {
+            if (productsData.Items.length === 0) {
+                console.log('Product not found by id in products table');
                 return buildResponse(404,
                     {
                         message: "Product not found"
                     });
             }
-            if (data2.Items.length === 0) {
+            if (stocksData.Items.length === 0) {
+                console.log('Product not found by id in stocks table');
                 return buildResponse(404,
                     {
                         message: "Product not found"
                     });
             }
-            const data2ItemsById = data2.Items.reduce((acc, item) => {
+            const stocksDataItemsById = stocksData.Items.reduce((acc, item) => {
                 acc[item.product_id] = item;
                 return acc;
             }, {});
 
-            const mergedData = data1.Items.map(item1 => {
-                const item2 = data2ItemsById[item1.id];
+            const mergedData = productsData.Items.map(item1 => {
+                const item2 = stocksDataItemsById[item1.id];
                 const mergedItem = { ...item1, ...item2 };
                 delete mergedItem.product_id;
                 return mergedItem;
             });
 
+            console.log('Merged data from products and stocks tables:', JSON.stringify(mergedData, null, 2));
+
             return mergedData;
         } else {
-            throw new Error('data1.Items or data2.Items is undefined');
+            return buildResponse(500,
+                {
+                    message: "productsData.Items or stocksData.Items is undefined"
+                });
         }
     } catch (err) {
         console.error('Unable to query from tables. Error JSON:', JSON.stringify(err, null, 2));

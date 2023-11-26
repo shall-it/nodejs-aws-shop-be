@@ -3,9 +3,11 @@ import { DynamoDB } from 'aws-sdk';
 const docClient = new DynamoDB.DocumentClient();
 
 exports.handler = async (event: any) => {
-    const body = JSON.parse(event.body);
+    const productBody = JSON.parse(event.body);
 
-    const fieldsToCheck = [
+    console.log(`Product body of request for product creation: ${productBody}`);
+
+    const paramsToCheck = [
         { name: 'id', type: 'string', required: true },
         { name: 'title', type: 'string', required: true },
         { name: 'description', type: 'string', required: false },
@@ -13,54 +15,61 @@ exports.handler = async (event: any) => {
         { name: 'count', type: 'number', required: true }
     ];
 
-    for (const field of fieldsToCheck) {
-        const value = body[field.name];
-        if (field.required && !value) {
+    for (const param of paramsToCheck) {
+        const value = productBody[param.name];
+        if (param.required && !value) {
             return buildResponse(400,
                 {
-                    message: `Invalid or missing ${field.name}`
+                    message: `Invalid or missing ${param.name}`
                 });
         }
-        if (value && typeof value !== field.type) {
+        if (value && typeof value !== param.type) {
             return buildResponse(400,
                 {
-                    message: `Invalid type of ${field.name}`
+                    message: `Invalid type of ${param.name}`
                 });
         }
     }
 
+    const productsTableName = process.env.PRODUCTS_TABLE_NAME;
+    const stocksTableName = process.env.STOCKS_TABLE_NAME;
 
-    const table1Name = process.env.TABLE1_NAME;
-    const table2Name = process.env.TABLE2_NAME;
-
-    if (!table1Name || !table2Name) {
-        throw new Error('Environment variables TABLE1_NAME and TABLE2_NAME must be set');
+    if (!productsTableName || !stocksTableName) {
+        return buildResponse(500,
+            {
+                message: "Environment variables PRODUCTS_TABLE_NAME and STOCKS_TABLE_NAME must be set"
+            });
     }
+
+    console.log(`Name for table of products: ${productsTableName}`);
+    console.log(`Name for table of stocks: ${stocksTableName}`);
 
     const params = {
         TransactItems: [
             {
                 Put: {
-                    TableName: table1Name,
+                    TableName: productsTableName,
                     Item: {
-                        id: body.id,
-                        description: body.description,
-                        price: body.price,
-                        title: body.title
+                        id: productBody.id,
+                        description: productBody.description,
+                        price: productBody.price,
+                        title: productBody.title
                     }
                 }
             },
             {
                 Put: {
-                    TableName: table2Name,
+                    TableName: stocksTableName,
                     Item: {
-                        product_id: body.id,
-                        count: body.count
+                        product_id: productBody.id,
+                        count: productBody.count
                     }
                 }
             }
         ]
     };
+
+    console.log('Parameters for product creation in both tables:', JSON.stringify(params, null, 2));
 
     try {
         await docClient.transactWrite(params).promise();

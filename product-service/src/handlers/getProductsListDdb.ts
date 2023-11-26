@@ -3,44 +3,55 @@ import { DynamoDB } from 'aws-sdk';
 const docClient = new DynamoDB.DocumentClient();
 
 exports.handler = async () => {
-    const table1Name = process.env.TABLE1_NAME;
-    const table2Name = process.env.TABLE2_NAME;
+    const productsTableName = process.env.PRODUCTS_TABLE_NAME;
+    const stocksTableName = process.env.STOCKS_TABLE_NAME;
 
-    if (!table1Name || !table2Name) {
-        throw new Error('Environment variables TABLE1_NAME and TABLE2_NAME must be set');
+    if (!productsTableName || !stocksTableName) {
+        return buildResponse(500,
+            {
+                message: "Environment variables PRODUCTS_TABLE_NAME and STOCKS_TABLE_NAME must be set"
+            });
     }
 
-    const params1 = {
-        TableName: table1Name,
+    console.log(`Name for table of products: ${productsTableName}`);
+    console.log(`Name for table of stocks: ${stocksTableName}`);
+
+    const productsParams = {
+        TableName: productsTableName,
     };
 
-    const params2 = {
-        TableName: table2Name,
+    const stocksParams = {
+        TableName: stocksTableName,
     };
 
     try {
-        const data1 = await docClient.scan(params1).promise();
-        console.log('Scan of products table is succeeded:', JSON.stringify(data1.Items, null, 2));
+        const productsData = await docClient.scan(productsParams).promise();
+        console.log('Scan of products table is succeeded:', JSON.stringify(productsData.Items, null, 2));
 
-        const data2 = await docClient.scan(params2).promise();
-        console.log('Scan of stocks table is succeeded:', JSON.stringify(data2.Items, null, 2));
+        const stocksData = await docClient.scan(stocksParams).promise();
+        console.log('Scan of stocks table is succeeded:', JSON.stringify(stocksData.Items, null, 2));
 
-        if (data1.Items && data2.Items) {
-            const data2ItemsById = data2.Items.reduce((acc, item) => {
+        if (productsData.Items && stocksData.Items) {
+            const stocksDataItemsById = stocksData.Items.reduce((acc, item) => {
                 acc[item.product_id] = item;
                 return acc;
             }, {});
 
-            const mergedData = data1.Items.map(item1 => {
-                const item2 = data2ItemsById[item1.id];
+            const mergedData = productsData.Items.map(item1 => {
+                const item2 = stocksDataItemsById[item1.id];
                 const mergedItem = { ...item1, ...item2 };
                 delete mergedItem.product_id;
                 return mergedItem;
             });
 
+            console.log('Merged data from products and stocks tables:', JSON.stringify(mergedData, null, 2));
+
             return mergedData;
         } else {
-            throw new Error('data1.Items or data2.Items is undefined');
+            return buildResponse(500,
+                {
+                    message: "productsData.Items or stocksData.Items is undefined"
+                });
         }
     } catch (err) {
         console.error('Unable to scan tables. Error JSON:', JSON.stringify(err, null, 2));
