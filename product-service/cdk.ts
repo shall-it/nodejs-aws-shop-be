@@ -40,6 +40,18 @@ const getProductsList = new NodejsFunction(stack, 'GetProductsListLambda', {
   entry: 'src/handlers/getProductsListDdb.ts',
 });
 
+const getProductsById = new NodejsFunction(stack, 'GetProductsByIdLambda', {
+  ...sharedLambdaProps,
+  functionName: 'getProductsById',
+  entry: 'src/handlers/getProductsByIdDdb.ts',
+});
+
+// const createProduct = new NodejsFunction(stack, 'createProductLambda', {
+//   ...sharedLambdaProps,
+//   functionName: 'createProduct',
+//   entry: 'src/handlers/createProductDdb.ts',
+// });
+
 const table1 = dynamodb.Table.fromTableName(stack, 'Table1', table1Name);
 const table2 = dynamodb.Table.fromTableName(stack, 'Table2', table2Name);
 
@@ -54,12 +66,8 @@ const policy = new iam.PolicyStatement({
 
 table1.grantReadData(getProductsList)
 table2.grantReadData(getProductsList)
-
-const getProductsById = new NodejsFunction(stack, 'GetProductsByIdLambda', {
-  ...sharedLambdaProps,
-  functionName: 'getProductsById',
-  entry: 'src/handlers/getProductsById.ts',
-});
+table1.grantReadData(getProductsById)
+table2.grantReadData(getProductsById)
 
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
