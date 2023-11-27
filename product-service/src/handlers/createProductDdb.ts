@@ -1,5 +1,6 @@
 import { buildResponse } from '../utils';
 import { DynamoDB } from 'aws-sdk';
+const { v4: uuidv4 } = require('uuid');
 const docClient = new DynamoDB.DocumentClient();
 
 exports.handler = async (event: any) => {
@@ -8,7 +9,6 @@ exports.handler = async (event: any) => {
     console.log(`Product body of request for product creation: ${productBody}`);
 
     const paramsToCheck = [
-        { name: 'id', type: 'string', required: true },
         { name: 'title', type: 'string', required: true },
         { name: 'description', type: 'string', required: false },
         { name: 'price', type: 'number', required: true },
@@ -44,13 +44,15 @@ exports.handler = async (event: any) => {
     console.log(`Name for table of products: ${productsTableName}`);
     console.log(`Name for table of stocks: ${stocksTableName}`);
 
+    const id = uuidv4();
+
     const params = {
         TransactItems: [
             {
                 Put: {
                     TableName: productsTableName,
                     Item: {
-                        id: productBody.id,
+                        id: id,
                         description: productBody.description,
                         price: productBody.price,
                         title: productBody.title
@@ -61,7 +63,7 @@ exports.handler = async (event: any) => {
                 Put: {
                     TableName: stocksTableName,
                     Item: {
-                        product_id: productBody.id,
+                        product_id: id,
                         count: productBody.count
                     }
                 }

@@ -17,6 +17,8 @@ if (!productAWSRegion) {
   throw new Error('Variable PRODUCT_AWS_REGION must be set into .env file');
 }
 
+console.log(`CDK region for deploy: ${productAWSRegion}`);
+
 const stack = new cdk.Stack(app, 'ProductServiceStack', {
   env: { region: productAWSRegion }
 });
@@ -28,8 +30,8 @@ if (!tableNameProducts || !tableNameStocks) {
   throw new Error('Variables TABLE_NAME_PRODUCTS and TABLE_NAME_STOCKS must be set into .env file');
 }
 
-console.log(`Name for table of products: ${tableNameProducts}`);
-console.log(`Name for table of stocks: ${tableNameStocks}`);
+console.log(`Name for DynamoDB table of products: ${tableNameProducts}`);
+console.log(`Name for DynamoDB table of stocks: ${tableNameStocks}`);
 
 const sharedLambdaProps: Partial<NodejsFunctionProps> = {
   runtime: lambda.Runtime.NODEJS_20_X,

@@ -1,9 +1,6 @@
-const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 
-const id = uuidv4();
 const productData = {
-    id: id,
     description: 'This is the third test product',
     price: 300,
     title: 'Test Product 3',
