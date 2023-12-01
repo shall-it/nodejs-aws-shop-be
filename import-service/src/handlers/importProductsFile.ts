@@ -3,8 +3,8 @@ import { S3 } from 'aws-sdk';
 
 exports.handler = async (event: any) => {
     const s3 = new S3();
-    const fileName = event.fileName;
     const bucketName = process.env.BUCKET_NAME;
+    const filePath = event.queryStringParameters.name;
 
     if (!bucketName) {
         return buildResponse(500,
@@ -17,11 +17,11 @@ exports.handler = async (event: any) => {
 
     const params = {
         Bucket: bucketName,
-        Key: `uploaded/${fileName}`,
+        Key: `uploaded/${filePath}`,
+        ContentType: 'text/csv',
         Expires: 60,
     };
 
     const url = await s3.getSignedUrlPromise('putObject', params);
-    return url;
-
+    return buildResponse(200, url);
 };

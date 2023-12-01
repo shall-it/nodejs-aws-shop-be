@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
-import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cr from 'aws-cdk-lib/custom_resources';
+import dotenv from 'dotenv';
 
-
-const dotenv = require('dotenv');
 dotenv.config();
 
 const app = new cdk.App();
@@ -55,16 +54,20 @@ importProductsFile.addToRolePolicy(new iam.PolicyStatement({
   resources: [bucket.arnForObjects('uploaded/*')],
 }));
 
-const api = new apiGateway.HttpApi(stack, 'ImportApi', {
-  corsPreflight: {
-    allowHeaders: ['*'],
-    allowOrigins: ['*'],
-    allowMethods: [apiGateway.CorsHttpMethod.ANY],
+const api = new apigateway.RestApi(stack, 'ImportApiRest', {
+  defaultCorsPreflightOptions: {
+    allowOrigins: apigateway.Cors.ALL_ORIGINS,
+    allowMethods: apigateway.Cors.ALL_METHODS,
+    allowHeaders: ['*']
   }
 });
 
-api.addRoutes({
-  integration: new HttpLambdaIntegration('importProductsFileIntegration', importProductsFile),
-  path: '/import',
-  methods: [apiGateway.HttpMethod.GET]
-})
+const resource = api.root.addResource('import');
+
+const integration = new apigateway.LambdaIntegration(importProductsFile);
+
+resource.addMethod('GET', integration, {
+  requestParameters: {
+    'method.request.querystring.name': true
+  }
+});
