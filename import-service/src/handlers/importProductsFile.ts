@@ -1,9 +1,9 @@
 import { buildResponse } from '../utils';
 import { S3 } from 'aws-sdk';
 
-exports.handler = async (event: any) => {
+export const handler = async (event: any) => {
     const s3 = new S3();
-    const bucketName = process.env.BUCKET_NAME;
+    const bucketName = process.env.BUCKET_NAME!;
     const filePath = event.queryStringParameters.name;
 
     if (!bucketName) {

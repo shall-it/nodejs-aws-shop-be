@@ -15,7 +15,6 @@
     "test:deploy": "npm test && npm run deploy"
   },
   "devDependencies": {
-    "@types/aws-sdk": "^2.7.0",
     "@types/jest": "^29.5.8",
     "@types/lodash": "^4.14.201",
     "@types/node": "^20.10.1",

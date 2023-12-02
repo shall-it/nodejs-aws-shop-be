@@ -6,7 +6,7 @@ import { Readable } from 'stream';
 const s3 = new S3();
 const bucketName = process.env.BUCKET_NAME!;
 
-exports.handler = async (event: any) => {
+export const handler = async (event: any) => {
     const key: string = event.Records[0].s3.object.key;
     try {
         await s3.headObject({ Bucket: bucketName, Key: key }).promise();
