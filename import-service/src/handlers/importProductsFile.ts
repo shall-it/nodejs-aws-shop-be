@@ -9,7 +9,7 @@ exports.handler = async (event: any) => {
     if (!bucketName) {
         return buildResponse(500,
             {
-                message: "Environment variable BUCKET_NAME must be set"
+                message: 'Environment variable BUCKET_NAME must be set'
             });
     }
 

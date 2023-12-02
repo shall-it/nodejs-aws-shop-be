@@ -5,8 +5,8 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as cr from 'aws-cdk-lib/custom_resources';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
+// import * as cr from 'aws-cdk-lib/custom_resources';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -25,6 +25,7 @@ const stack = new cdk.Stack(app, 'ImportServiceStack', {
 });
 
 const bucketName = process.env.BUCKET_NAME!;
+const prefix_uploaded = 'uploaded/';
 
 if (!bucketName) {
   throw new Error('Variable BUCKET_NAME must be set into .env file');
@@ -48,11 +49,7 @@ const importProductsFile = new NodejsFunction(stack, 'ImportProductsFileLambda',
   entry: 'src/handlers/importProductsFile.ts',
 });
 
-bucket.grantReadWrite(importProductsFile)
-importProductsFile.addToRolePolicy(new iam.PolicyStatement({
-  actions: ['s3:PutObject'],
-  resources: [bucket.arnForObjects('uploaded/*')],
-}));
+bucket.grantWrite(importProductsFile.grantPrincipal, `${prefix_uploaded}*`);
 
 const api = new apigateway.RestApi(stack, 'ImportApiRest', {
   defaultCorsPreflightOptions: {
@@ -71,3 +68,17 @@ resource.addMethod('GET', integration, {
     'method.request.querystring.name': true
   }
 });
+
+const importFileParser = new NodejsFunction(stack, 'ImportFileParserLambda', {
+  ...sharedLambdaProps,
+  functionName: 'importFileParser',
+  entry: 'src/handlers/importFileParser.ts',
+});
+
+bucket.grantReadWrite(importFileParser.grantPrincipal, `${prefix_uploaded}*`);
+
+bucket.addEventNotification(
+  s3.EventType.OBJECT_CREATED,
+  new s3n.LambdaDestination(importFileParser),
+  { prefix: prefix_uploaded }
+);
