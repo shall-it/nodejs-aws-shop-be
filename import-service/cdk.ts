@@ -6,8 +6,8 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
-import dotenv from 'dotenv';
 import { S3 } from 'aws-sdk';
+import dotenv from 'dotenv';
 
 dotenv.config();
 

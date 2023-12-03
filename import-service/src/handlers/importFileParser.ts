@@ -67,5 +67,5 @@ export const handler = async (event: any) => {
         }
     }
 
-    return buildResponse(200, 'CSV processing completed');
+    return buildResponse(200, 'CSV file processing completed');
 };
