@@ -6,12 +6,13 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
-// import * as cr from 'aws-cdk-lib/custom_resources';
 import dotenv from 'dotenv';
+import { S3 } from 'aws-sdk';
 
 dotenv.config();
 
 const app = new cdk.App();
+const s3sdk = new S3();
 
 const importAWSRegion = process.env.IMPORT_AWS_REGION!
 if (!importAWSRegion) {
@@ -43,6 +44,34 @@ const sharedLambdaProps: Partial<NodejsFunctionProps> = {
 };
 
 const bucket = s3.Bucket.fromBucketName(stack, 'importBucket', bucketName);
+
+const parsedDirectory = 'parsed/';
+const params = { Bucket: bucketName, Key: parsedDirectory, Body: '' };
+const corsParams = {
+  Bucket: bucketName,
+  CORSConfiguration: {
+    CORSRules: [
+      {
+        AllowedHeaders: ['*'],
+        AllowedMethods: ['PUT'],
+        AllowedOrigins: ['https://dyfk99rjrorkr.cloudfront.net'],
+        ExposeHeaders: []
+      }
+    ]
+  }
+};
+
+s3sdk.putObject(params, function (err) {
+  if (err) {
+    console.log("Error of directory creating:", err);
+  }
+});
+
+s3sdk.putBucketCors(corsParams, function (err) {
+  if (err) {
+    console.log("Error of CORS adding:", err);
+  }
+});
 
 const importProductsFile = new NodejsFunction(stack, 'ImportProductsFileLambda', {
   ...sharedLambdaProps,
