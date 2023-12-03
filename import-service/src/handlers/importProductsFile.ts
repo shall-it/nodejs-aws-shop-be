@@ -23,5 +23,6 @@ export const handler = async (event: any) => {
     };
 
     const url = await s3.getSignedUrlPromise('putObject', params);
+    console.log(url)
     return buildResponse(200, url);
 };

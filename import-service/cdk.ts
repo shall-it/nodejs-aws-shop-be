@@ -26,6 +26,7 @@ const stack = new cdk.Stack(app, 'ImportServiceStack', {
 
 const bucketName = process.env.BUCKET_NAME!;
 const prefix_uploaded = 'uploaded/';
+const prefix_parsed = 'parsed/';
 
 if (!bucketName) {
   throw new Error('Variable BUCKET_NAME must be set into .env file');
@@ -76,6 +77,7 @@ const importFileParser = new NodejsFunction(stack, 'ImportFileParserLambda', {
 });
 
 bucket.grantReadWrite(importFileParser.grantPrincipal, `${prefix_uploaded}*`);
+bucket.grantWrite(importFileParser.grantPrincipal, `${prefix_parsed}*`);
 
 bucket.addEventNotification(
   s3.EventType.OBJECT_CREATED,
