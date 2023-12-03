@@ -65,7 +65,7 @@ describe('Test handler', () => {
                 'Access-Control-Allow-Credentials': true,
                 'Access-Control-Allow-Headers': '*',
             },
-            body: JSON.stringify('CSV processing completed'),
+            body: JSON.stringify('CSV file processing completed'),
         });
     });
 });
