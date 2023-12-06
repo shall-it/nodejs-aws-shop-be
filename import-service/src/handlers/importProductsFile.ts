@@ -4,12 +4,12 @@ import { S3 } from 'aws-sdk';
 export const handler = async (event: any) => {
     const s3 = new S3();
     const bucketName = process.env.BUCKET_NAME!;
-    const filePath = event.queryStringParameters.name;
+    const fileName = event.queryStringParameters.name;
 
-    if (!bucketName) {
+    if (!fileName) {
         return buildResponse(500,
             {
-                message: 'Environment variable BUCKET_NAME must be set'
+                message: 'CSV file name cannot be extracted'
             });
     }
 
@@ -17,7 +17,7 @@ export const handler = async (event: any) => {
 
     const params = {
         Bucket: bucketName,
-        Key: `uploaded/${filePath}`,
+        Key: `uploaded/${fileName}`,
         ContentType: 'text/csv',
         Expires: 60,
     };

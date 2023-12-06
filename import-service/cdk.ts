@@ -45,8 +45,7 @@ const sharedLambdaProps: Partial<NodejsFunctionProps> = {
 
 const bucket = s3.Bucket.fromBucketName(stack, 'importBucket', bucketName);
 
-const parsedDirectory = 'parsed/';
-const params = { Bucket: bucketName, Key: parsedDirectory, Body: '' };
+const params = { Bucket: bucketName, Key: prefix_parsed, Body: '' };
 const corsParams = {
   Bucket: bucketName,
   CORSConfiguration: {

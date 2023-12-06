@@ -1,13 +1,14 @@
 import { buildResponse } from '../utils';
 import { S3 } from 'aws-sdk';
+import { S3Event } from 'aws-lambda';
 import csv from 'csv-parser';
 import { Readable } from 'stream';
 
 const s3 = new S3();
-const bucketName = process.env.BUCKET_NAME!;
 
-export const handler = async (event: any) => {
+export const handler = async (event: S3Event) => {
     const key: string = event.Records[0].s3.object.key;
+    const bucketName: string = event.Records[0].s3.bucket.name
     console.log('CSV file processing started for', key)
     try {
         await s3.headObject({ Bucket: bucketName, Key: key }).promise();
