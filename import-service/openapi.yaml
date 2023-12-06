@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  version: "1.0.0"
+  title: "Import service"
+servers:
+  - url: https://sw4mnq00z4.execute-api.us-east-1.amazonaws.com/prod/
+tags:
+  - name: "import"
+    description: "Import of products from uploaded CSV file"
+paths:
+  /import:
+    get:
+      tags:
+        - "import"
+      summary: "Import of products"
+      responses:
+        '200':
+          description: "Providing of presigned URL for Frontend to upload file into S3"
+        '500':
+          description: "Environment variable BUCKET_NAME must be set"
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Product-Mock"        
+        description:
+          type: string
+          example: "Short Product Description"
+        price:
+          type: integer
+          format: int32
+          example: 100
+        count:
+          type: number
+          example: 3
