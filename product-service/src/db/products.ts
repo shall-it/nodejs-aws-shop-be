@@ -44,7 +44,7 @@ export async function createProduct(productBody: any): Promise<any> {
 
         return productBody;
     } catch (err: any) {
-        console.error('Unable to create product. Error JSON:', JSON.stringify(err.Message, null, 2));
+        console.error('Unable to create product. Error JSON:', JSON.stringify(err, null, 2));
         return buildResponse(500,
             {
                 message: "Unhandled error"

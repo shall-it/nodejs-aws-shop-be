@@ -1,7 +1,7 @@
 import { buildResponse } from '../utils';
 import { S3 } from 'aws-sdk';
-import { SQS } from 'aws-sdk';
 import { S3Event } from 'aws-lambda';
+import { SQS } from 'aws-sdk';
 import csv from 'csv-parser';
 import { Readable } from 'stream';
 
