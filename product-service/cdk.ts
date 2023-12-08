@@ -103,6 +103,8 @@ const catalogBatchProcess = new NodejsFunction(stack, 'CatalogBatchProcessLambda
 });
 catalogBatchProcess.addEventSource(new SqsEventSource(importQueue, { batchSize: 5 }));
 importProductTopic.grantPublish(catalogBatchProcess);
+productsTableName.grantWriteData(catalogBatchProcess);
+stocksTableName.grantWriteData(catalogBatchProcess);
 
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {

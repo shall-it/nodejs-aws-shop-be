@@ -1,3 +1,4 @@
+import { buildResponse } from '../utils';
 import { DynamoDB } from 'aws-sdk';
 const { v4: uuidv4 } = require('uuid');
 
@@ -18,7 +19,7 @@ export async function createProduct(productBody: any): Promise<any> {
                     Item: {
                         id: id,
                         description: productBody.description,
-                        price: productBody.price,
+                        price: Number(productBody.price),
                         title: productBody.title
                     }
                 }
@@ -28,13 +29,25 @@ export async function createProduct(productBody: any): Promise<any> {
                     TableName: stocksTableName as string,
                     Item: {
                         product_id: id,
-                        count: productBody.count
+                        count: Number(productBody.count)
                     }
                 }
             }
         ]
     };
 
-    await docClient.transactWrite(params).promise();
-    return productBody;
+    console.log('Parameters for product creation in both tables:', JSON.stringify(params, null, 2));
+
+    try {
+        await docClient.transactWrite(params).promise();
+        console.log('Creation of product in products and stocks is succeeded');
+
+        return productBody;
+    } catch (err: any) {
+        console.error('Unable to create product. Error JSON:', JSON.stringify(err.Message, null, 2));
+        return buildResponse(500,
+            {
+                message: "Unhandled error"
+            });
+    }
 }
