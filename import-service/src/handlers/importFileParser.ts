@@ -1,10 +1,12 @@
 import { buildResponse } from '../utils';
 import { S3 } from 'aws-sdk';
+import { SQS } from 'aws-sdk';
 import { S3Event } from 'aws-lambda';
 import csv from 'csv-parser';
 import { Readable } from 'stream';
 
 const s3 = new S3();
+const sqs = new SQS();
 
 export const handler = async (event: S3Event) => {
     const key: string = event.Records[0].s3.object.key;
@@ -24,6 +26,19 @@ export const handler = async (event: S3Event) => {
                 .on('data', async function (data: any) {
                     csvreadstream.pause();
                     console.log(JSON.stringify(data));
+
+                    const sqsParams = {
+                        QueueUrl: process.env.IMPORT_SQS_URL!,
+                        MessageBody: JSON.stringify(data),
+                    };
+
+                    try {
+                        await sqs.sendMessage(sqsParams).promise();
+                        console.log('Message sent to SQS queue:', sqsParams.MessageBody);
+                    } catch (err) {
+                        console.error('Error sending message to SQS queue:', err);
+                    }
+
                     csvreadstream.resume();
                 })
                 .on('end', async function () {

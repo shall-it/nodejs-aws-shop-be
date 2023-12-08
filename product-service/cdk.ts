@@ -6,6 +6,9 @@ import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-al
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -33,12 +36,36 @@ if (!tableNameProducts || !tableNameStocks) {
 console.log(`Name for DynamoDB table of products: ${tableNameProducts}`);
 console.log(`Name for DynamoDB table of stocks: ${tableNameStocks}`);
 
+const importQueue = new sqs.Queue(stack, 'ImportQueue', {
+  queueName: 'import-file-queue'
+});
+
+const importProductTopic = new sns.Topic(stack, 'ImportProductTopic', {
+  topicName: 'import-products-topic'
+});
+
+new sns.Subscription(stack, 'BigStockSubscription', {
+  endpoint: process.env.BIG_STOCK_EMAIL!,
+  protocol: sns.SubscriptionProtocol.EMAIL,
+  topic: importProductTopic
+});
+
+// new sns.Subscription(stack, 'RegularStockSubscription', {
+//   endpoint: process.env.REGULAR_STOCK_EMAIL!,
+//   protocol: sns.SubscriptionProtocol.EMAIL,
+//   topic: importProductTopic,
+//   filterPolicy: {
+//     count: sns.SubscriptionFilter.numericFilter({ lessThanOrEqualTo: 10 })
+//   }
+// });
+
 const sharedLambdaProps: Partial<NodejsFunctionProps> = {
   runtime: lambda.Runtime.NODEJS_20_X,
   environment: {
     PRODUCT_AWS_REGION: productAWSRegion,
     PRODUCTS_TABLE_NAME: tableNameProducts,
     STOCKS_TABLE_NAME: tableNameStocks,
+    IMPORT_PRODUCTS_TOPIC_ARN: importProductTopic.topicArn
   }
 };
 
@@ -68,6 +95,14 @@ const createProduct = new NodejsFunction(stack, 'createProductLambda', {
 });
 productsTableName.grantWriteData(createProduct)
 stocksTableName.grantWriteData(createProduct)
+
+const catalogBatchProcess = new NodejsFunction(stack, 'CatalogBatchProcessLambda', {
+  ...sharedLambdaProps,
+  functionName: 'catalogBatchProcess',
+  entry: 'src/handlers/catalogBatchProcess.ts',
+});
+catalogBatchProcess.addEventSource(new SqsEventSource(importQueue, { batchSize: 5 }));
+importProductTopic.grantPublish(catalogBatchProcess);
 
 const api = new apiGateway.HttpApi(stack, 'ProductApi', {
   corsPreflight: {
