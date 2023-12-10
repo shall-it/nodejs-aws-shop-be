@@ -50,14 +50,14 @@ new sns.Subscription(stack, 'BigStockSubscription', {
   topic: importProductTopic
 });
 
-// new sns.Subscription(stack, 'RegularStockSubscription', {
-//   endpoint: process.env.REGULAR_STOCK_EMAIL!,
-//   protocol: sns.SubscriptionProtocol.EMAIL,
-//   topic: importProductTopic,
-//   filterPolicy: {
-//     count: sns.SubscriptionFilter.numericFilter({ lessThanOrEqualTo: 10 })
-//   }
-// });
+new sns.Subscription(stack, 'RegularStockSubscription', {
+  endpoint: process.env.REGULAR_STOCK_EMAIL!,
+  protocol: sns.SubscriptionProtocol.EMAIL,
+  topic: importProductTopic,
+  filterPolicy: {
+    count: sns.SubscriptionFilter.numericFilter({ lessThanOrEqualTo: 5 })
+  }
+});
 
 const sharedLambdaProps: Partial<NodejsFunctionProps> = {
   runtime: lambda.Runtime.NODEJS_20_X,
@@ -100,6 +100,7 @@ const catalogBatchProcess = new NodejsFunction(stack, 'CatalogBatchProcessLambda
   ...sharedLambdaProps,
   functionName: 'catalogBatchProcess',
   entry: 'src/handlers/catalogBatchProcess.ts',
+  // reservedConcurrentExecutions: 1,
 });
 catalogBatchProcess.addEventSource(new SqsEventSource(importQueue, { batchSize: 5 }));
 importProductTopic.grantPublish(catalogBatchProcess);

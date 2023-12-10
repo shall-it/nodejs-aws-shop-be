@@ -25,7 +25,7 @@ export const handler = async (event: S3Event) => {
                 .pipe(csv())
                 .on('data', async function (data: any) {
                     csvreadstream.pause();
-                    console.log(JSON.stringify(data));
+                    // console.log(JSON.stringify(data));
 
                     const sqsParams = {
                         QueueUrl: process.env.IMPORT_SQS_URL!,
