@@ -47,7 +47,10 @@ const importProductTopic = new sns.Topic(stack, 'ImportProductTopic', {
 new sns.Subscription(stack, 'BigStockSubscription', {
   endpoint: process.env.BIG_STOCK_EMAIL!,
   protocol: sns.SubscriptionProtocol.EMAIL,
-  topic: importProductTopic
+  topic: importProductTopic,
+  filterPolicy: {
+    count: sns.SubscriptionFilter.numericFilter({ greaterThan: 5 })
+  }
 });
 
 new sns.Subscription(stack, 'RegularStockSubscription', {

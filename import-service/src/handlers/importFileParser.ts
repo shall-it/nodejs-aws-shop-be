@@ -34,7 +34,7 @@ export const handler = async (event: S3Event) => {
 
                     try {
                         await sqs.sendMessage(sqsParams).promise();
-                        console.log('Message sent to SQS queue:', sqsParams.MessageBody);
+                        // console.log('Message sent to SQS queue:', sqsParams.MessageBody);
                     } catch (err) {
                         console.error('Error sending message to SQS queue:', err);
                     }
