@@ -23,6 +23,14 @@ export const handler = async (event: S3Event) => {
         await new Promise<void>((resolve, reject) => {
             csvreadstream
                 .pipe(csv())
+                .on('headers', (csvHeaders: string[]) => {
+                    const paramsToCheck = ['title', 'description', 'price', 'count'];
+                    const isHeaderMissed = paramsToCheck.some(param => !csvHeaders.includes(param));
+                    if (isHeaderMissed) {
+                        const message = `Some header is missed`
+                        reject(new Error(message));
+                    }
+                })
                 .on('data', async function (data: any) {
                     csvreadstream.pause();
                     // console.log(JSON.stringify(data));
