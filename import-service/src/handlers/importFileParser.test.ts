@@ -7,6 +7,7 @@ const mockHeadObjectPromise = jest.fn();
 const mockGetObjectPromise = jest.fn();
 const mockCopyObjectPromise = jest.fn();
 const mockDeleteObjectPromise = jest.fn();
+const mockSendMessagePromise = jest.fn();
 
 jest.mock('aws-sdk', () => {
     return {
@@ -16,23 +17,27 @@ jest.mock('aws-sdk', () => {
             copyObject: () => ({ promise: mockCopyObjectPromise }),
             deleteObject: () => ({ promise: mockDeleteObjectPromise }),
         })),
+        SQS: jest.fn(() => ({
+            sendMessage: () => ({ promise: mockSendMessagePromise }),
+        })),
     };
 });
 
 describe('Test handler', () => {
+    let mockEvent: S3Event;
+    let sqsParams;
+
     beforeEach(() => {
         mockHeadObjectPromise.mockClear();
         mockGetObjectPromise.mockClear();
         mockCopyObjectPromise.mockClear();
         mockDeleteObjectPromise.mockClear();
-    });
-
-    it('should call headObject and getObject with correct parameters', async () => {
+        mockSendMessagePromise.mockClear();
 
         const bucketName = 'testBucket';
         const key = 'test.csv';
 
-        const mockEvent = {
+        mockEvent = {
             Records: [
                 {
                     s3: {
@@ -47,10 +52,25 @@ describe('Test handler', () => {
             ],
         } as S3Event;
 
-        mockHeadObjectPromise.mockResolvedValue({ Bucket: bucketName, Key: key });
-        mockGetObjectPromise.mockResolvedValue({ Body: 'test' });
-        mockCopyObjectPromise.mockResolvedValue({ Bucket: bucketName, CopySource: `${bucketName}/${mockEvent.Records[0].s3.object.key}`, Key: mockEvent.Records[0].s3.object.key.replace('uploaded', 'parsed') });
-        mockDeleteObjectPromise.mockResolvedValue({ Bucket: bucketName, Key: mockEvent.Records[0].s3.object.key });
+        const mockData = {
+            title: "Test Product",
+            description: "This is the test product",
+            price: 1000,
+            count: 100
+        };
+
+        sqsParams = {
+            QueueUrl: 'https://sqs.us-east-1.amazonaws.com/0123456789/test-queue',
+            MessageBody: JSON.stringify(mockData),
+        };
+    });
+
+    it('should call headObject and getObject with correct parameters', async () => {
+        mockHeadObjectPromise.mockResolvedValue({});
+        mockGetObjectPromise.mockResolvedValue({ Body: 'title,description,price,count\nTest Product,This is the test product,1000,100' });
+        mockCopyObjectPromise.mockResolvedValue({});
+        mockDeleteObjectPromise.mockResolvedValue({});
+        mockSendMessagePromise.mockResolvedValue({});
 
         const response = await handler(mockEvent);
 
@@ -59,10 +79,7 @@ describe('Test handler', () => {
         expect(mockGetObjectPromise).toHaveBeenCalledTimes(1);
         expect(mockCopyObjectPromise).toHaveBeenCalledTimes(1);
         expect(mockDeleteObjectPromise).toHaveBeenCalledTimes(1);
-        expect(mockHeadObjectPromise).toHaveBeenCalled();
-        expect(mockGetObjectPromise).toHaveBeenCalled();
-        expect(mockCopyObjectPromise).toHaveBeenCalledWith();
-        expect(mockDeleteObjectPromise).toHaveBeenCalledWith();
+        expect(mockSendMessagePromise).toHaveBeenCalledTimes(1);
         expect(response).toEqual({
             statusCode: 200,
             headers: {
@@ -72,5 +89,15 @@ describe('Test handler', () => {
             },
             body: JSON.stringify('CSV file processing completed'),
         });
+    });
+
+    it('should handle errors', async () => {
+        mockHeadObjectPromise.mockRejectedValue(new Error('Test error'));
+
+        try {
+            await handler(mockEvent);
+        } catch (err) {
+            expect(err).toEqual(new Error('Test error'));
+        }
     });
 });
