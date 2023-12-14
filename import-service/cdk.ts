@@ -97,6 +97,17 @@ bucket.addEventNotification(
   { prefix: prefix_uploaded }
 );
 
+const basicAuthorizerFunctionArn = cdk.Fn.importValue('BasicAuthorizerArn');
+console.log(`basicAuthorizerFunctionArn: ${basicAuthorizerFunctionArn}`);
+
+const basicAuthorizer = lambda.Function.fromFunctionArn(stack, 'BasicAuthorizerFromLambda', basicAuthorizerFunctionArn);
+
+const authorizer = new apigateway.TokenAuthorizer(stack, 'BasicAuthorizerForImport', {
+  handler: basicAuthorizer,
+  identitySource: 'method.request.header.Authorization',
+  resultsCacheTtl: cdk.Duration.seconds(0),
+});
+
 const api = new apigateway.RestApi(stack, 'ImportApiRest', {
   defaultCorsPreflightOptions: {
     allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -112,5 +123,16 @@ const integration = new apigateway.LambdaIntegration(importProductsFile);
 resource.addMethod('GET', integration, {
   requestParameters: {
     'method.request.querystring.name': true
-  }
+  },
+  authorizationType: apigateway.AuthorizationType.CUSTOM,
+  authorizer: authorizer
+});
+
+const authorizerArn = `arn:aws:execute-api:${stack.region}:${stack.account}:${api.restApiId}/authorizers/${authorizer.authorizerId}`;
+
+new lambda.CfnPermission(stack, 'ApiGatewayInvokePermission', {
+  action: 'lambda:InvokeFunction',
+  functionName: basicAuthorizerFunctionArn,
+  principal: 'apigateway.amazonaws.com',
+  sourceArn: authorizerArn
 });

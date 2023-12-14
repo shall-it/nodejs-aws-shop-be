@@ -3,7 +3,7 @@ info:
   version: "1.0.0"
   title: "Import service"
 servers:
-  - url: https://sw4mnq00z4.execute-api.us-east-1.amazonaws.com/prod/
+  - url: https://98tzokb9lf.execute-api.us-east-1.amazonaws.com/prod/
 tags:
   - name: "import"
     description: "Import of products from uploaded CSV file"
