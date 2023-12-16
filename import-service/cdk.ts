@@ -124,6 +124,15 @@ resource.addMethod('GET', integration, {
   requestParameters: {
     'method.request.querystring.name': true
   },
+  methodResponses: [
+    {
+      statusCode: '200',
+      responseParameters: {
+        'method.response.header.Content-Type': true,
+        'method.response.header.Access-Control-Allow-Origin': true,
+      },
+    },
+  ],
   authorizationType: apigateway.AuthorizationType.CUSTOM,
   authorizer: authorizer
 });
