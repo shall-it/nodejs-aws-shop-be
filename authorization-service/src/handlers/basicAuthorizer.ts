@@ -6,6 +6,7 @@ exports.handler = async (event: APIGatewayTokenAuthorizerEvent) => {
     const token = event.authorizationToken;
 
     if (!token) {
+        console.log('401')
         return buildResponse(401,
             {
                 message: 'Authorization header is not provided'
@@ -38,12 +39,14 @@ exports.handler = async (event: APIGatewayTokenAuthorizerEvent) => {
             console.log(policy)
             return policy
         } else {
+            console.log('403')
             return buildResponse(403,
                 {
                     message: 'Access is denied for this user due to invalid authorization token'
                 });
         }
     } catch (err) {
+        console.log('500')
         return buildResponse(500,
             {
                 message: 'An error occurred:', err
